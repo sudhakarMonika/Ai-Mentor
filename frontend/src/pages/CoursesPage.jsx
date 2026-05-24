@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from "react";
-=======
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Star, X, BookOpen, Search, ChevronLeft, ChevronRight } from "lucide-react";
->>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import API from "../lib/api";
@@ -13,7 +10,6 @@ import toast from "react-hot-toast";
 import { AlertTriangle } from "lucide-react";
 
 const CoursesPage = () => {
-<<<<<<< HEAD
   const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -24,7 +20,6 @@ const CoursesPage = () => {
   const [myCourses, setMyCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-=======
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState("my-courses");
     const { user } = useAuth();
@@ -36,7 +31,6 @@ const CoursesPage = () => {
     const [myCourses, setMyCourses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
->>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 
     const [showReportModal, setShowReportModal] = useState(false);
     const [reportText, setReportText] = useState("");
@@ -45,7 +39,6 @@ const CoursesPage = () => {
     const [reportCourse, setReportCourse] = useState("");
     const [reportLoading, setReportLoading] = useState(false);
 
-<<<<<<< HEAD
   /* ================= NORMALIZE ================= */
 
   const normalize = (res) => {
@@ -92,7 +85,6 @@ const CoursesPage = () => {
       } finally {
         setLoading(false);
       }
-=======
     const [filters, setFilters] = useState({ category: [], level: [], price: [] });
     const [showFilters, setShowFilters] = useState(false);
 
@@ -105,14 +97,12 @@ const CoursesPage = () => {
                 return { ...prev, [field]: [...current, value] };
             }
         });
->>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
     };
 
     const getActiveFilterCount = () => {
         return filters.category.length + filters.level.length + filters.price.length;
     };
 
-<<<<<<< HEAD
   /* ================= LOADING ================= */
 
   if (loading) {
@@ -346,7 +336,6 @@ const CoursesPage = () => {
 };
 
 export default CoursesPage; 
-=======
     const [showEnrollPopup, setShowEnrollPopup] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState(null);
 
@@ -1209,4 +1198,3 @@ export default CoursesPage;
 };
 
 export default CoursesPage;
->>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
