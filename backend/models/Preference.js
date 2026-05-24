@@ -35,10 +35,6 @@ Preference.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    extra_preferences: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
   },
   {
     sequelize,

@@ -35,8 +35,7 @@ export const createPreferences = async (req, res) => {
       learning_style,
       teaching_pace,
       example_type,
-      focus_area,
-      extra_preferences
+      focus_area
     } = req.body;
 
     // Validate required fields
@@ -50,8 +49,7 @@ export const createPreferences = async (req, res) => {
       learning_style,
       teaching_pace,
       example_type,
-      focus_area,
-      extra_preferences
+      focus_area
     });
 
     res.status(201).json(preferences);
@@ -77,8 +75,7 @@ export const updatePreferences = async (req, res) => {
       learning_style,
       teaching_pace,
       example_type,
-      focus_area,
-      extra_preferences
+      focus_area
     } = req.body;
 
     // Validate required fields
@@ -91,7 +88,6 @@ export const updatePreferences = async (req, res) => {
     preferences.teaching_pace = teaching_pace;
     preferences.example_type = example_type;
     preferences.focus_area = focus_area;
-    preferences.extra_preferences = extra_preferences !== undefined ? extra_preferences : preferences.extra_preferences;
 
     await preferences.save();
 

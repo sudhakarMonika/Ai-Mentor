@@ -1,76 +1,78 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import Header from "./components/Header";
+import AdminSidebar from "./components/layout/AdminSidebar";
+import Toast from "./components/Toast";
+import { PAGE_TITLES } from "./constants/adminNavigation";
+import { ToastProvider } from "./context/ToastContext";
+import CoursesPage from "./pages/CoursesPage";
+import DashboardPage from "./pages/DashboardPage";
+import EnrollmentsPage from "./pages/EnrollmentsPage";
+import LoginPage from "./pages/LoginPage";
+import PaymentsPage from "./pages/PaymentsPage";
+import UsersPage from "./pages/UsersPage";
+import ReportsPage from "./pages/ReportsPage";
+import ProfilePage from "./pages/ProfilePage";
+import SettingsPage from "./pages/SettingsPage";
 
-const courses = [
-  ["UI/UX Masterclass", "Design", "Rs 89.00", "1,204", "Published"],
-  ["Full Stack Dev Bootcamp", "Development", "Rs 149.00", "3,450", "Published"],
-  ["Digital Marketing Strategy", "Marketing", "Rs 59.00", "892", "Draft"],
-  ["Python for Data Science", "Development", "Rs 120.00", "2,115", "Published"],
-  ["AWS Cloud Certification", "Development", "Rs 199.00", "1,876", "Published"],
-  ["Product Management Fundamentals", "Business", "Rs 79.00", "654", "Draft"],
-];
 
-const users = [
-  ["John Doe", "john@example.com", "5", "2024-01-15", "Active"],
-  ["Jane Smith", "jane@example.com", "3", "2024-02-01", "Active"],
-  ["Mike Johnson", "mike@example.com", "8", "2023-11-20", "Active"],
-  ["Sarah Williams", "sarah@example.com", "2", "2024-01-28", "Inactive"],
-  ["David Brown", "david@example.com", "6", "2023-12-10", "Active"],
-];
-
-const enrollments = [
-  ["John Doe", "UI/UX Masterclass", "2024-02-08", "Rs 89.00", "Completed"],
-  ["Jane Smith", "Full Stack Dev Bootcamp", "2024-02-07", "Rs 149.00", "Completed"],
-  ["Mike Johnson", "Python for Data Science", "2024-02-06", "Rs 120.00", "Pending"],
-  ["Sarah Williams", "Digital Marketing Strategy", "2024-02-05", "Rs 59.00", "Completed"],
-  ["David Brown", "AWS Cloud Certification", "2024-02-04", "Rs 199.00", "Refunded"],
-];
-
-const transactions = [
-  ["John Doe", "UI/UX Masterclass", "+Rs 89.00", "2024-02-08", "text-green-600"],
-  ["Jane Smith", "Full Stack Dev Bootcamp", "+Rs 149.00", "2024-02-07", "text-green-600"],
-  ["Mike Johnson", "Python for Data Science", "+Rs 120.00", "2024-02-06", "text-amber-500"],
-  ["Sarah Williams", "Digital Marketing Strategy", "+Rs 59.00", "2024-02-05", "text-green-600"],
-  ["David Brown", "AWS Cloud Certification", "-Rs 199.00", "2024-02-04", "text-red-600"],
-];
-
-const navItems = [
-  ["dashboard", "Dashboard"],
-  ["courses", "Courses"],
-  ["users", "Users"],
-  ["enrollments", "Enrollments"],
-  ["payments", "Payments"],
-];
+const PAGE_COMPONENTS = {
+  dashboard: DashboardPage,
+  courses: CoursesPage,
+  users: UsersPage,
+  enrollments: EnrollmentsPage,
+  payments: PaymentsPage,
+  reports: ReportsPage,
+  profile: ProfilePage,
+  settings: SettingsPage,
+};
 
 function App() {
+  const location = useLocation();
+  const token = localStorage.getItem("token");
   const [page, setPage] = useState("courses");
+  const [mobileNav, setMobileNav] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  const title = useMemo(() => {
-    switch (page) {
-      case "dashboard":
-        return "Dashboard";
-      case "courses":
-        return "Manage Courses";
-      case "users":
-        return "Manage Users";
-      case "enrollments":
-        return "Enrollments";
-      case "payments":
-        return "Payments";
-      default:
-        return "Dashboard";
+  useEffect(() => {
+    const pathName = location.pathname.replace("/", "");     
+    if (PAGE_COMPONENTS[pathName]) {
+      setPage(pathName);
     }
-  }, [page]);
+  }, [location.pathname]);
+
+  const title = useMemo(() => PAGE_TITLES[page] ?? PAGE_TITLES.dashboard, [page]);
+  const CurrentPage = PAGE_COMPONENTS[page] ?? DashboardPage;
+  const isLoginRoute = location.pathname === "/login";
+
+  if (isLoginRoute) {
+    return <LoginPage />;
+  }
+
+  if (!token) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]" style={{ backgroundColor: "var(--admin-bg)" }}>
-      <aside className="text-white flex flex-col" style={{ backgroundColor: "var(--admin-sidebar)" }}>
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold" style={{ backgroundColor: "var(--admin-primary)" }}>S</div>
-            <div>
-              <p className="font-semibold text-xl leading-5">UptoSkills</p>
-              <p className="text-xs text-white/70">Admin Portal</p>
+    <ToastProvider>
+      <div className="min-h-screen bg-canvas-alt text-main">
+        <AdminSidebar
+          page={page}
+          onPageChange={setPage}
+          mobileOpen={mobileNav}
+          onMobileClose={() => setMobileNav(false)}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((prev) => !prev)}
+        />
+
+        <main className={`min-h-screen transition-all duration-300 ${sidebarCollapsed ? "lg:ml-24" : "lg:ml-80"}`}>
+          <Header title={title} onMenuClick={() => setMobileNav(true)} />
+
+          <section className="p-4 md:p-8">
+            <div className="rounded-2xl bg-card border border-border overflow-hidden shadow-[0_2px_8px_rgba(26,26,26,0.06)]">
+              <CurrentPage />
             </div>
+<<<<<<< HEAD
           </div>
         </div>
 
@@ -291,6 +293,13 @@ function PaymentsPage() {
         ))}
       </div>
     </div>
+=======
+          </section>
+        </main>
+      </div>
+      <Toast />
+    </ToastProvider>
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
   );
 }
 

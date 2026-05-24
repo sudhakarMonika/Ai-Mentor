@@ -5,6 +5,8 @@ import { Op } from "sequelize";
 
 import User from "../models/User.js";
 import sendEmail from "../utils/sendEmail.js";
+import { ensureProfileCompleteness, formatFullName } from "../utils/userUtils.js";
+import cloudinary from "../config/cloudinary.js";
 
 /* ================= TOKEN ================= */
 const generateToken = (id) => {
@@ -13,7 +15,12 @@ const generateToken = (id) => {
   });
 };
 
+<<<<<<< HEAD
 /* ================= REGISTER ================= */
+=======
+// Centralized logic moved to userUtils.js
+
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 const register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -38,26 +45,109 @@ const register = async (req, res) => {
 
     // ❗ DO NOT HASH HERE (handled by Sequelize hook)
     const user = await User.create({
-      name,
+      name: formatFullName(name, ""), // Standard register provides 'name', we treat as first part if needed
       email,
       password,
     });
 
+<<<<<<< HEAD
     return res.status(201).json({
       success: true,
       token: generateToken(user.id),
       user: {
+=======
+    await ensureProfileCompleteness(user);
+
+    res.status(201).json({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      bio: user.bio,
+      avatar_url: user.avatar_url,
+      isProfileComplete: user.isProfileComplete,
+      googleId: user.googleId,
+      hasPassword: !!user.password,
+      purchasedCourses: user.purchasedCourses,
+      isNewUser: true,
+      token: generateToken(user.id),
+    });
+  } catch (error) {
+    console.error("Register Error:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+};
+
+const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    console.log("Login attempt for email:", email);
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      console.log("User not found in DB.");
+      return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    console.log("Password match result:", isMatch);
+
+    if (user && user.password && isMatch) {
+      console.log("Login successful!");
+      await ensureProfileCompleteness(user);
+      
+      res.json({
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
+<<<<<<< HEAD
         isProfileComplete: user.isProfileComplete,
       },
     });
+=======
+        bio: user.bio,
+        avatar_url: user.avatar_url,
+        isProfileComplete: user.isProfileComplete,
+        googleId: user.googleId,
+        hasPassword: !!user.password,
+        purchasedCourses: user.purchasedCourses,
+        isNewUser: false,
+        token: generateToken(user.id),
+      });
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 
   } catch (error) {
     console.error("❌ Register Error:", error);
     return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+// Background task to refresh/re-host avatar to Cloudinary without blocking login
+const refreshAvatarInBackground = async (userId, googlePictureUrl) => {
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      console.warn(`Skipping background avatar refresh because user ${userId} was not found`);
+      return;
+    }
+
+    const result = await cloudinary.uploader.upload(googlePictureUrl, {
+      folder: "user_avatars",
+      public_id: `user_${userId}`,
+      overwrite: true,
+    });
+
+    // Persist the new permanent Cloudinary URL, then recompute profile completeness
+    user.avatar_url = result.secure_url;
+    await user.save();
+    await ensureProfileCompleteness(user);
+    console.log(`Successfully refreshed/re-hosted avatar to Cloudinary for user ${userId}`);
+  } catch (err) {
+    console.error("Background avatar refresh failed:", err);
   }
 };
 
@@ -136,23 +226,122 @@ const googleLogin = async (req, res) => {
       Buffer.from(idToken.split(".")[1], "base64").toString()
     );
 
+<<<<<<< HEAD
+=======
+    // console.log("Google Login Payload:", JSON.stringify(payload, null, 2));
+    const uid = payload.sub;
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
     const email = payload.email;
     const name = payload.name || email.split("@")[0];
+    let firstName = payload.given_name || "";
+    let lastName = payload.family_name || "";
+    const avatar_url = payload.picture || null;
+
+    // Fallback if given_name and family_name are missing
+    if (!firstName && !lastName && name) {
+      const nameParts = name.trim().split(/\s+/);
+      firstName = nameParts[0] || "";
+      lastName = nameParts.slice(1).join(" ") || "";
+    }
+    const fullName = formatFullName(firstName, lastName);
 
     let user = await User.findOne({ where: { email } });
+    let isNewUser = false;
 
     if (!user) {
+      isNewUser = true;
       user = await User.create({
-        name,
+        name: fullName,
         email,
+<<<<<<< HEAD
         password: null,
+=======
+        firstName,
+        lastName,
+        avatar_url,
+        googleId: uid,
+        role: "user",
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
       });
+    } else {
+      let changed = false;
+      if (!user.googleId) {
+        user.googleId = uid;
+        changed = true;
+      }
+
+      // Pre-fill missing names/avatar from Google if they are empty
+      if (!user.firstName && firstName) {
+        user.firstName = firstName;
+        changed = true;
+      }
+      if (!user.lastName && lastName) {
+        user.lastName = lastName;
+        changed = true;
+      }
+      if (!user.avatar_url && avatar_url) {
+        user.avatar_url = avatar_url;
+        changed = true;
+      }
+      
+      // Update name if components changed
+      if (changed) {
+        user.name = formatFullName(user.firstName, user.lastName);
+        await user.save();
+      }
     }
 
+    await ensureProfileCompleteness(user);
+
+    // 🔥 OPTIMIZATION: Flicker-Free Avatar Re-hosting
+    if (avatar_url) {
+      const isCurrentlyGoogleHosted = user.avatar_url?.includes("googleusercontent.com");
+      const isMissing = !user.avatar_url;
+
+      if (isNewUser) {
+        // For new users, we wait (sync) to ensure their first impression is perfect and initials don't flicker
+        try {
+          const result = await cloudinary.uploader.upload(avatar_url, {
+            folder: "user_avatars",
+            public_id: `user_${user.id}`,
+            overwrite: true,
+          });
+          user.avatar_url = result.secure_url;
+          await user.save();
+        } catch (err) {
+          console.error("Sync avatar re-hosting failed:", err);
+          // Fallback: the response will still use the Google URL if Cloudinary fails
+        }
+      } else if (isCurrentlyGoogleHosted || isMissing) {
+        // For returning users, keep it backgrounded (async) to maintain instant speed
+        refreshAvatarInBackground(user.id, avatar_url);
+      }
+    }
+
+<<<<<<< HEAD
     return res.json({
       success: true,
       token: generateToken(user.id),
       user,
+=======
+    const token = generateToken(user.id);
+
+    res.json({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      bio: user.bio,
+      avatar_url: user.avatar_url,
+      isProfileComplete: user.isProfileComplete,
+      googleId: user.googleId,
+      hasPassword: !!user.password,
+      purchasedCourses: user.purchasedCourses,
+      isNewUser,
+      token,
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
     });
 
   } catch (error) {

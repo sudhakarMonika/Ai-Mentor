@@ -5,6 +5,11 @@ import path from "path";
 import { protect } from "../middleware/authMiddleware.js";
 import validate from "../middleware/validate.js";
 import { generateVideoSchema } from "../schemas/aiSchema.js";
+<<<<<<< HEAD
+=======
+import { getCourseAndLessonTitles } from "../controllers/courseController.js";
+import Preferences from "../models/Preference.js";
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -158,6 +163,84 @@ router.post(
         message: "Failed to generate AI video",
       });
     }
+<<<<<<< HEAD
+=======
+
+
+    // Get titles from JSON
+    const titles = await getCourseAndLessonTitles(courseId, lessonId);
+
+    if (!titles) {
+      return res.status(404).json({ message: "Invalid course or lesson" });
+    }
+
+    const { courseTitle, lessonTitle } = titles;
+
+    const userPreferencesRecord = await Preferences.findOne({
+      where: { user_id: req.user.id }   // 👈 FIX
+    });
+
+    const userPreferences = userPreferencesRecord
+      ? userPreferencesRecord.toJSON()
+      : null;
+
+    // Call AI service
+    console.log("🤖 Cache miss. Calling AI service for:", celebrity);
+
+    console.log("📤 Sending preferences to AI service:");
+    console.log(userPreferences);
+
+
+    const aiResponse = await fetch(
+      `${process.env.AI_SERVICE_URL}/generate`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          course: courseTitle,
+          topic: lessonTitle,
+          celebrity,
+          preferences: userPreferences,   // 👈 NEW
+        }),
+      }
+    );
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+
+      console.error("❌ AI SERVICE RESPONSE:", errorText);
+
+      return res.status(500).json({
+        message: "AI service failed",
+        aiError: errorText,
+      });
+    }
+
+    const { filename, text_file, jobId } = await aiResponse.json();
+
+    const videoUrl = `/api/ai/video/${courseId}/${filename}`;
+
+    // Save to Cache
+    await AIVideo.create({
+      courseId: Number(courseId),
+      lessonId: String(lessonId),
+      celebrity: String(celebrity).toLowerCase(),
+      videoUrl,
+      transcriptName: text_file,
+      jobId,
+    });
+
+    res.json({
+      videoUrl,
+      transcriptName: text_file,
+      jobId,
+      cached: false,
+    });
+
+  } catch (error) {
+    console.error("AI GENERATE ERROR:", error);
+    res.status(500).json({ message: "Failed to generate AI video" });
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
   }
 );
 

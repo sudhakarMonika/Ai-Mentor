@@ -10,7 +10,7 @@ pnpm-debug.log*
 __pycache__
 
 venv/
-
+outputfolder
 # Videos
 videos/
 
@@ -61,5 +61,8 @@ coverage/
 
 */.agents
 
+<<<<<<< HEAD
 outputfolder/
 backend/uploads/
+=======
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9

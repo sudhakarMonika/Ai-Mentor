@@ -21,16 +21,26 @@ const LearningPage = lazy(() => import("./pages/LearningPage"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const CertificatesPage = lazy(() => import("./pages/CertificatesPage"));
+const ReportPage = lazy(() => import("./pages/ReportPage"));
 const Success = lazy(() => import("./pages/Success"));
+<<<<<<< HEAD
 
 /* =========================
    REDIRECT LOGIC
 ========================= */
 
+=======
+const NotFound = lazy(() => import("./pages/NotFound"));
+import CompleteProfilePage from "./pages/CompleteProfilePage";
+import "./App.css";
+
+// Redirect from root
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
+<<<<<<< HEAD
 
   return (
     <Navigate
@@ -40,10 +50,17 @@ const RootRedirect = () => {
   );
 };
 
+=======
+  return <Navigate to={user?.isProfileComplete ? "/dashboard" : "/complete-profile"} replace />;
+};
+
+// Public routes (block logged-in users)
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 const PublicRoutes = () => {
   const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) return <Outlet />;
+<<<<<<< HEAD
 
   return (
     <Navigate
@@ -51,6 +68,9 @@ const PublicRoutes = () => {
       replace
     />
   );
+=======
+  return <Navigate to={user?.isProfileComplete ? "/dashboard" : "/complete-profile"} replace />;
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 };
 
 /* =========================
@@ -62,10 +82,17 @@ const App = () => {
     <Suspense fallback={<LoadingSpinner />}>
       <Routes>
 
+<<<<<<< HEAD
         {/* Root Redirect */}
         <Route path="/" element={<RootRedirect />} />
 
         {/* Public Routes */}
+=======
+        {/* Root redirect */}
+        <Route path="/" element={<RootRedirect />} />
+
+        {/* Public routes */}
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
         <Route element={<PublicRoutes />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
@@ -73,7 +100,11 @@ const App = () => {
           <Route path="/reset-password/:token" element={<ResetPassword />} />
         </Route>
 
+<<<<<<< HEAD
         {/* Protected Routes */}
+=======
+        {/* Protected routes */}
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
         <Route element={<ProtectedRoute />}>
 
           {/* Profile Completion */}
@@ -88,22 +119,35 @@ const App = () => {
             <Route path="/discussions" element={<DiscussionsPage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/certificates" element={<CertificatesPage />} />
+<<<<<<< HEAD
 
             {/* ✅ FIXED ROUTE (IMPORTANT) */}
             <Route path="/watched" element={<WatchedVideos />} />
 
+=======
+            <Route path="/report" element={<ReportPage />} />
+            <Route path="/watchedvideos" element={<WatchedVideos />} />
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
             <Route path="/learning/:id" element={<LearningPage />} />
             <Route path="/success" element={<Success />} />
 
           </Route>
+          <Route path="/course-preview/:courseId" element={<CoursePreview />} />
         </Route>
+        {/* Catch-all route for 404 Not Found */}
+        <Route path="*" element={<NotFound />} />
 
+
+
+<<<<<<< HEAD
         {/* Public Course Preview */}
         <Route path="/course-preview/:courseId" element={<CoursePreview />} />
 
         {/* ✅ FALLBACK ROUTE */}
         <Route path="*" element={<Navigate to="/" replace />} />
 
+=======
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
       </Routes>
     </Suspense>
   );

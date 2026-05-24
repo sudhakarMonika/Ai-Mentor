@@ -13,7 +13,12 @@ export const useSidebar = () => {
 
 // ✅ Provider
 export const SidebarProvider = ({ children }) => {
+<<<<<<< HEAD
   const [sidebarOpen, setSidebarOpen] = useState(false);
+=======
+    // sidebarOpen is for mobile/tablet responsive view
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+>>>>>>> 46475d46a8b8297766ec84501c47bd26576c41d9
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try {

@@ -1,0 +1,254 @@
+import { useEffect, useState } from "react";
+import { callApi } from "../utils/api";
+
+function PaymentsPage() {
+  const [data, setData] = useState({ summary: {}, transactions: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      try {
+        setLoading(true);
+        const res = await callApi("/admin/payments?type=list");
+        if (res.success) {
+          setData({
+            summary: res.summary || {},
+            transactions: res.data || [],
+          });
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPayments();
+  }, []);
+  const handleShowDetails = (payment) => {
+  setSelectedPayment(payment);
+  setShowModal(true);
+  };
+
+ const closeModal = () => {
+   setShowModal(false);
+   setSelectedPayment(null);
+  };
+
+  if (loading)
+    return (
+      <div className="p-10 text-center text-muted">Loading payments...</div>
+    );
+  if (error)
+    return <div className="p-10 text-center text-red-500">Error: {error}</div>;
+
+  return (
+    <div className="p-6 md:p-8 space-y-6">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <article className="rounded-2xl border border-border p-5">
+          <p className="text-muted text-sm uppercase tracking-wider font-bold">
+            Total Revenue
+          </p>
+          <p className="text-4xl font-black mt-2">
+            Rs {data.summary.totalAmount || 0}
+          </p>
+        </article>
+        <article className="rounded-2xl border border-border p-5">
+          <p className="text-muted text-sm uppercase tracking-wider font-bold">
+            Total Payments
+          </p>
+          <p className="text-4xl font-black mt-2 text-green-600">
+            {data.summary.totalPayments || 0}
+          </p>
+        </article>
+        <article className="rounded-2xl border border-border p-5 opacity-50">
+          <p className="text-muted text-sm uppercase tracking-wider font-bold">
+            Refunded
+          </p>
+          <p className="text-4xl font-black mt-2 text-red-600">Rs 0</p>
+        </article>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="p-5 border-b border-border flex items-center justify-between">
+          <h3 className="text-xl font-black uppercase tracking-tight">
+            Recent Transactions
+          </h3>
+          <span className="text-[10px] font-bold text-muted bg-canvas-alt px-3 py-1 rounded-full uppercase tracking-widest">
+            Live Updates
+          </span>
+        </div>
+
+        <div className="divide-y divide-border/50">
+          {data.transactions.length > 0 ? (
+            data.transactions.map((t) => (
+             
+              <div
+                key={t.paymentId}
+                className="grid grid-cols-[1.5fr_1fr_auto] items-center gap-6 p-5 hover:bg-canvas-alt transition-colors"
+              >
+                {/* LEFT SECTION */}
+                <div className="flex items-center gap-4 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-600 font-bold uppercase text-[10px] shrink-0">
+                    Pay
+                  </div>
+
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm uppercase tracking-tight truncate">
+                      {t.userName}
+                    </p>
+
+                    <p className="text-xs text-gray-500 font-medium truncate">
+                      {t.courseTitle}
+                    </p>
+
+                    <p className="text-[11px] text-gray-400 font-mono mt-1 truncate">
+                      TXN ID: {t.transactionId || t.paymentId}
+                    </p>
+                  </div>
+                </div>
+
+                {/* MIDDLE SECTION */}
+                <div className="text-center">
+                  <p
+                    className={`font-black text-sm ${
+                      t.status === "paid" ? "text-green-600" : "text-gray-500"
+                    }`}
+                  >
+                    + Rs {t.amount}
+                  </p>
+
+                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1">
+                    {t.purchaseDate
+                      ? new Date(t.purchaseDate).toLocaleDateString()
+                      : "Pending"}
+                  </p>
+                </div>
+
+                {/* RIGHT SECTION */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => handleShowDetails(t)}
+                    className="h-10 px-4 rounded-xl bg-teal-500 text-white hover:bg-teal-600 transition-colors font-semibold whitespace-nowrap"
+                  >
+                    See Details
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="p-10 text-center text-muted italic text-sm">
+              No transactions found.
+            </div>
+          )}
+        </div>
+      </div>
+      {/* PAYMENT DETAILS MODAL */}
+{showModal && selectedPayment && (
+  <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="w-full max-w-2xl rounded-3xl border border-border bg-card shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+      {/* HEADER */}
+      <div className="p-6 border-b border-border bg-linear-to-r from-teal-500/5 to-transparent flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-main">
+            Payment Details
+          </h2>
+          <p className="text-xs text-muted mt-1 font-medium uppercase tracking-widest">
+            Transaction Information
+          </p>
+        </div>
+        <button
+          onClick={closeModal}
+          className="w-10 h-10 rounded-xl border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"
+        >
+          ✕
+        </button>
+      </div>
+      {/* BODY */}
+      <div className="p-8 grid md:grid-cols-2 gap-6">
+        {/* USER */}
+        <div className="rounded-2xl border border-border bg-canvas p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">
+            User
+          </p>
+          <p className="text-lg font-bold text-main">
+            {selectedPayment.userName}
+          </p>
+        </div>
+        {/* COURSE */}
+        <div className="rounded-2xl border border-border bg-canvas p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">
+            Course
+          </p>
+          <p className="text-lg font-bold text-main">
+            {selectedPayment.courseTitle}
+          </p>
+        </div>
+        {/* AMOUNT */}
+        <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-green-600 mb-2">
+            Amount
+          </p>
+          <p className="text-3xl font-black text-green-600">
+            ₹ {selectedPayment.amount}
+          </p>
+        </div>
+        {/* STATUS */}
+        <div className="rounded-2xl border border-border bg-canvas p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">
+            Status
+          </p>
+          <span
+            className={`inline-flex h-8 items-center px-4 rounded-xl text-[11px] font-black uppercase tracking-widest ${
+              selectedPayment.status === "paid"
+                ? "bg-green-500/10 text-green-600"
+                : "bg-orange-500/10 text-orange-500"
+            }`}
+          >
+            {selectedPayment.status}
+          </span>
+        </div>
+        {/* TRANSACTION ID */}
+        <div className="md:col-span-2 rounded-2xl border border-border bg-canvas p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">
+            Transaction ID
+          </p>
+          <p className="font-mono text-sm break-all text-main">
+            {selectedPayment.transactionId ||
+              selectedPayment.paymentId}
+          </p>
+        </div>
+        {/* DATE */}
+        <div className="md:col-span-2 rounded-2xl border border-border bg-canvas p-5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-muted mb-2">
+            Purchase Date
+          </p>
+          <p className="font-bold text-main">
+            {selectedPayment.purchaseDate
+              ? new Date(
+                  selectedPayment.purchaseDate
+                ).toLocaleString()
+              : "Pending"}
+          </p>
+        </div>
+      </div>
+      {/* FOOTER */}
+      <div className="border-t border-border p-6 flex justify-end">
+        <button
+          onClick={closeModal}
+          className="h-12 px-6 rounded-2xl border border-border font-black uppercase tracking-widest text-[11px] hover:bg-canvas-alt transition-all"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+    </div>
+  );
+}
+
+export default PaymentsPage;
