@@ -141,7 +141,6 @@ const googleLogin = async (req, res) => {
     }
 
     const decodedToken = await admin.auth().verifyIdToken(idToken);
-
     if (decodedToken.aud !== process.env.FIREBASE_PROJECT_ID) {
       return res.status(401).json({ message: "Invalid audience" });
     }
